@@ -1,15 +1,2 @@
-```
-# Dependencies
-node_modules/
-
-# Logs and temp files
-*.log
-
-# Environment
-.env
-.env.local
-*.env.*
-
-# Editors
-.vscode/
-```
+# Examples and documentation
+GHAZIOS/SKILL.md
