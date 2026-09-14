@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHAZIOS Kitchen - Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="kitchen-styles.css">
+    <style>
+        .demo-notice { background: #ff9800; color: white; padding: 10px; text-align: center; font-weight: 600; }
+        .kitchen-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; padding: 20px; }
+        .order-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #ff9800; }
+        .order-card.ready { border-left-color: #4caf50; }
+        .order-header { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .order-number { font-size: 18px; font-weight: 800; }
+        .order-time { color: #999; font-size: 14px; }
+        .order-items { margin: 15px 0; }
+        .order-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .btn-complete { width: 100%; padding: 12px; background: #4caf50; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .btn-pending { width: 100%; padding: 12px; background: #ff9800; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="demo-notice">🚧 DEMO MODE - Backend features disabled</div>
+    <header style="padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <h1>GHAZIOS Kitchen Display</h1>
+        <p>Demo Restaurant</p>
+    </header>
+    <div class="kitchen-board" id="kitchenBoard">
+        <div class="order-card">
+            <div class="order-header"><span class="order-number">#ORD-001</span><span class="order-time">10:30 AM</span></div>
+            <div class="order-items">
+                <div class="order-item"><span>2x Burger</span><span>Pending</span></div>
+                <div class="order-item"><span>1x Fries</span><span>Pending</span></div>
+            </div>
+            <button class="btn-complete" onclick="this.parentElement.classList.add('ready'); this.textContent='Completed'; this.disabled=true;">Mark Ready</button>
+        </div>
+        <div class="order-card">
+            <div class="order-header"><span class="order-number">#ORD-002</span><span class="order-time">10:45 AM</span></div>
+            <div class="order-items">
+                <div class="order-item"><span>1x Pizza</span><span>Cooking</span></div>
+                <div class="order-item"><span>1x Coke</span><span>Ready</span></div>
+            </div>
+            <button class="btn-complete" onclick="this.parentElement.classList.add('ready'); this.textContent='Completed'; this.disabled=true;">Mark Ready</button>
+        </div>
+        <div class="order-card ready">
+            <div class="order-header"><span class="order-number">#ORD-003</span><span class="order-time">10:15 AM</span></div>
+            <div class="order-items">
+                <div class="order-item"><span>3x Fries</span><span>Ready</span></div>
+                <div class="order-item"><span>2x Coke</span><span>Ready</span></div>
+            </div>
+            <button class="btn-pending" onclick="alert('Order collected! (Demo)')">Mark Collected</button>
+        </div>
+    </div>
+</body>
+</html>

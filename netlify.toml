@@ -1,5 +1,15 @@
 [build]
   publish = "."
+  
+[[redirects]]
+  from = "/api/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/socket.io/*"
+  to = "/index.html"
+  status = 200
 
 [[redirects]]
   from = "/admin/*"

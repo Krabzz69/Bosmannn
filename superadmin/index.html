@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHAZIOS Super Admin - Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="superadmin-styles.css">
+    <style>
+        .demo-notice { background: #ff9800; color: white; padding: 10px; text-align: center; font-weight: 600; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 24px; color: white; }
+        .stat-card h3 { font-size: 14px; opacity: 0.9; margin-bottom: 8px; }
+        .stat-card .value { font-size: 32px; font-weight: 800; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 12px; overflow: hidden; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f5f5f5; font-weight: 600; }
+        .status-active { color: #4caf50; font-weight: 600; }
+        .btn-primary { padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="demo-notice">🚧 DEMO MODE - Backend features disabled</div>
+    <header style="padding: 20px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white;">
+        <h1>GHAZIOS Super Admin</h1>
+        <p>System Overview</p>
+    </header>
+    <main style="padding: 20px;">
+        <h2>Platform Statistics</h2>
+        <div class="dashboard-grid">
+            <div class="stat-card"><h3>Total Restaurants</h3><div class="value">12</div></div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"><h3>Total Users</h3><div class="value">1,248</div></div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"><h3>Orders Today</h3><div class="value">342</div></div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);"><h3>Revenue (Today)</h3><div class="value">Rs 125,450</div></div>
+        </div>
+        <h2 style="margin-top: 40px;">Registered Restaurants</h2>
+        <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Slug</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody>
+                <tr><td>1</td><td>Demo Restaurant</td><td>demo</td><td><span class="status-active">Active</span></td><td>Jan 15, 2024</td><td><button class="btn-primary">Manage</button></td></tr>
+                <tr><td>2</td><td>Burger House</td><td>burger-house</td><td><span class="status-active">Active</span></td><td>Feb 20, 2024</td><td><button class="btn-primary">Manage</button></td></tr>
+                <tr><td>3</td><td>Pizza Palace</td><td>pizza-palace</td><td><span class="status-active">Active</span></td><td>Mar 10, 2024</td><td><button class="btn-primary">Manage</button></td></tr>
+            </tbody>
+        </table>
+        <h2 style="margin-top: 40px;">System Users</h2>
+        <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Restaurant</th><th>Actions</th></tr></thead>
+            <tbody>
+                <tr><td>1</td><td>Admin User</td><td>admin@ghazios.com</td><td>Super Admin</td><td>-</td><td><button class="btn-primary">Edit</button></td></tr>
+                <tr><td>2</td><td>John Manager</td><td>john@demo.com</td><td>Manager</td><td>Demo Restaurant</td><td><button class="btn-primary">Edit</button></td></tr>
+                <tr><td>3</td><td>Jane Staff</td><td>jane@demo.com</td><td>Staff</td><td>Demo Restaurant</td><td><button class="btn-primary">Edit</button></td></tr>
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>

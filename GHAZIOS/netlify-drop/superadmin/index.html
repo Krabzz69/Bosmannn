@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHAZIOS Superadmin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="superadmin-styles.css">
+</head>
+<body>
+    <!-- LOGIN -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <div class="login-logo">
+                <div class="logo-text">GHAZIOS</div>
+                <div class="login-subtitle">System Administrator</div>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="login-btn">Sign In</button>
+                <div class="login-error" id="loginError"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SUPERADMIN INTERFACE -->
+    <div class="admin-container" id="adminContainer" style="display:none">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">GHAZIOS</div>
+                <div class="sidebar-sub">Superadmin</div>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-section="dashboard">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                    Dashboard
+                </button>
+                <button class="nav-item" data-section="restaurants">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    Restaurants
+                </button>
+                <button class="nav-item" data-section="users">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Users
+                </button>
+                <button class="nav-item" data-section="orders">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    All Orders
+                </button>
+                <button class="nav-item" data-section="inventory">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    Inventory
+                </button>
+                <button class="nav-item" data-section="products">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    Products
+                </button>
+                <button class="nav-item" data-section="reports">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    Reports
+                </button>
+                <button class="nav-item" data-section="announcements">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg>
+                    Announcements
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <span id="userName">Superadmin</span>
+                </div>
+                <button class="logout-btn" id="logoutBtn">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="content-header">
+                <div>
+                    <h1 id="sectionTitle">Dashboard</h1>
+                    <p id="sectionSubtitle">System overview</p>
+                </div>
+                <div class="header-right">
+                    <div class="header-time" id="currentTime"></div>
+                    <button class="refresh-btn" id="refreshBtn">↻ Refresh</button>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <!-- DASHBOARD -->
+                <section class="section active" id="dashboardSection">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon restaurants">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="totalTenants">0</span>
+                                <span class="stat-label">Restaurants</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon orders">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="todayOrders">0</span>
+                                <span class="stat-label">Today's Orders</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon orders">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="pendingOrders">0</span>
+                                <span class="stat-label">Pending Orders</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon low-stock">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="lowStockCount">0</span>
+                                <span class="stat-label">Low Stock Items</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card">
+                            <h3>Orders by Restaurant</h3>
+                            <div id="ordersByTenant"></div>
+                        </div>
+                        <div class="dashboard-card">
+                            <h3>Recent Activity</h3>
+                            <div id="recentActivity"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- RESTAURANTS -->
+                <section class="section" id="restaurantsSection">
+                    <div class="section-actions">
+                        <button class="btn-primary" id="addRestaurantBtn">+ Add Restaurant</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Restaurant</th>
+                                    <th>Slug</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Plan</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tenantsBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- USERS -->
+                <section class="section" id="usersSection">
+                    <div class="section-actions">
+                        <select id="userTenantFilter">
+                            <option value="">All Restaurants</option>
+                        </select>
+                        <select id="userRoleFilter">
+                            <option value="">All Roles</option>
+                            <option value="admin">Admin</option>
+                            <option value="cashier">Cashier</option>
+                            <option value="kitchen">Kitchen</option>
+                        </select>
+                        <button class="btn-primary" id="addUserBtn">+ Add User</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Restaurant</th>
+                                    <th>Full Name</th>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Last Login</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ORDERS -->
+                <section class="section" id="ordersSection">
+                    <div class="section-actions">
+                        <select id="orderStatusFilter">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="ready">Ready</option>
+                            <option value="collected">Collected</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <select id="orderPayFilter">
+                            <option value="">All Payments</option>
+                            <option value="cash">Cash</option>
+                            <option value="card">Card</option>
+                            <option value="mobile">Mobile</option>
+                        </select>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Restaurant</th>
+                                    <th>Invoice</th>
+                                    <th>Customer</th>
+                                    <th>Payment</th>
+                                    <th>Status</th>
+                                    <th>Total</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- INVENTORY -->
+                <section class="section" id="inventorySection">
+                    <div class="section-actions">
+                        <select id="tenantFilter">
+                            <option value="">All Restaurants</option>
+                        </select>
+                        <button class="btn-danger" id="resetInventoryBtn">Reset Selected Tenant Inventory</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Restaurant</th>
+                                    <th>Item</th>
+                                    <th>Stock</th>
+                                    <th>Unit</th>
+                                    <th>Reorder</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- PRODUCTS -->
+                <section class="section" id="productsSection">
+                    <div class="section-actions">
+                        <select id="productTenantFilter">
+                            <option value="">All Restaurants</option>
+                        </select>
+                        <button class="btn-primary" id="addProductBtn">+ Add Product</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Restaurant</th>
+                                    <th>SKU</th>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Price</th>
+                                    <th>Meal Price</th>
+                                    <th>Available</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- REPORTS -->
+                <section class="section" id="reportsSection">
+                    <div class="section-actions">
+                        <select id="reportPeriod">
+                            <option value="7">Last 7 Days</option>
+                            <option value="30" selected>Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                        </select>
+                        <select id="reportTenantFilter">
+                            <option value="">All Restaurants</option>
+                        </select>
+                    </div>
+
+                    <div class="stats-grid" style="margin-bottom:24px">
+                        <div class="stat-card">
+                            <div class="stat-icon orders">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="reportTotalOrders">0</span>
+                                <span class="stat-label">Total Orders</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon revenue">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="reportTotalRevenue">Rs 0</span>
+                                <span class="stat-label">Total Revenue</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon pending">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="reportAvgOrder">Rs 0</span>
+                                <span class="stat-label">Avg Order Value</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reports-grid">
+                        <div class="report-card">
+                            <h3>Daily Revenue</h3>
+                            <canvas id="revenueChart" height="200"></canvas>
+                        </div>
+                        <div class="report-card">
+                            <h3>Peak Hours</h3>
+                            <canvas id="hoursChart" height="200"></canvas>
+                        </div>
+                        <div class="report-card">
+                            <h3>Payment Methods</h3>
+                            <canvas id="paymentChart" height="200"></canvas>
+                        </div>
+                        <div class="report-card">
+                            <h3>Top Products</h3>
+                            <div id="topProductsList"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ANNOUNCEMENTS -->
+                <section class="section" id="announcementsSection">
+                    <div class="section-actions">
+                        <button class="btn-primary" id="addAnnouncementBtn">+ New Announcement</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Message</th>
+                                    <th>Priority</th>
+                                    <th>Target</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="announcementsBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- EDIT PRODUCT MODAL -->
+    <div class="modal-overlay" id="editProductModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Edit Product</h3>
+                <button class="modal-close" id="closeEditProduct">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="editProductName">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="editProductDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <input type="text" id="editProductCategory">
+                </div>
+                <div class="form-group">
+                    <label>Base Price (Rs)</label>
+                    <input type="number" id="editProductPrice" step="0.50" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Meal Upcharge (Rs)</label>
+                    <input type="number" id="editProductMealPrice" step="0.50" min="0">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="editProductAvailable"> Available
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="editProductCustomizable"> Customizable
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelEditProduct">Cancel</button>
+                <button class="btn-danger" id="deleteProduct">Delete</button>
+                <button class="btn-primary" id="saveProduct">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD RESTAURANT MODAL -->
+    <div class="modal-overlay" id="addRestaurantModal">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h3>Add New Restaurant</h3>
+                <button class="modal-close" id="closeAddRestaurant">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Restaurant Name *</label>
+                        <input type="text" id="newTenantName" placeholder="e.g. Burger Palace">
+                    </div>
+                    <div class="form-group">
+                        <label>Slug (URL) *</label>
+                        <input type="text" id="newTenantSlug" placeholder="e.g. burger-palace">
+                        <small class="form-hint">Lowercase, no spaces. Used in URLs.</small>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="text" id="newTenantPhone" placeholder="+230 5XXX XXXX">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="newTenantEmail" placeholder="info@restaurant.mu">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" id="newTenantAddress" placeholder="Street, City, Mauritius">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Primary Color</label>
+                        <div class="color-input">
+                            <input type="color" id="newTenantColor1" value="#D32F2F">
+                            <input type="text" id="newTenantColor1Text" value="#D32F2F" class="color-text">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Secondary Color</label>
+                        <div class="color-input">
+                            <input type="color" id="newTenantColor2" value="#1565C0">
+                            <input type="text" id="newTenantColor2Text" value="#1565C0" class="color-text">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Subscription Plan</label>
+                        <select id="newTenantPlan">
+                            <option value="basic">Basic</option>
+                            <option value="premium">Premium</option>
+                            <option value="enterprise">Enterprise</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Admin Password *</label>
+                        <input type="password" id="newTenantPassword" placeholder="Min 6 characters">
+                        <small class="form-hint">Password for the restaurant's admin login.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelAddRestaurant">Cancel</button>
+                <button class="btn-primary" id="confirmAddRestaurant">Create Restaurant</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD/EDIT USER MODAL -->
+    <div class="modal-overlay" id="userModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="userModalTitle">Add New User</h3>
+                <button class="modal-close" id="closeUserModal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Restaurant *</label>
+                    <select id="userTenantSelect"></select>
+                </div>
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="userFullName" placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Username *</label>
+                    <input type="text" id="userUsername" placeholder="john">
+                </div>
+                <div class="form-group">
+                    <label>Role *</label>
+                    <select id="userRole">
+                        <option value="cashier">Cashier</option>
+                        <option value="kitchen">Kitchen Staff</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label id="userPasswordLabel">Password *</label>
+                    <input type="password" id="userPassword" placeholder="Min 6 characters">
+                    <small class="form-hint" id="userPasswordHint">Leave blank to keep current password (edit only)</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelUserModal">Cancel</button>
+                <button class="btn-primary" id="saveUserBtn">Save User</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD ANNOUNCEMENT MODAL -->
+    <div class="modal-overlay" id="announcementModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>New Announcement</h3>
+                <button class="modal-close" id="closeAnnouncementModal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" id="announcementTitle" placeholder="e.g. System Maintenance">
+                </div>
+                <div class="form-group">
+                    <label>Message *</label>
+                    <textarea id="announcementMessage" rows="4" placeholder="Write your announcement here..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="announcementPriority">
+                            <option value="normal">Normal</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Send To</label>
+                        <select id="announcementTarget">
+                            <option value="all">All Restaurants</option>
+                            <option value="specific">Specific Restaurant</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" id="announcementTenantGroup" style="display:none">
+                    <label>Select Restaurant</label>
+                    <select id="announcementTenant"></select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelAnnouncement">Cancel</button>
+                <button class="btn-primary" id="sendAnnouncement">Send Announcement</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="superadmin-app.js"></script>
+</body>
+</html>

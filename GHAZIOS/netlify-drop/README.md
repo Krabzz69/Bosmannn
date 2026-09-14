@@ -4,22 +4,22 @@ This folder is ready to be dropped into Netlify for static hosting.
 
 ## 🚀 Quick Deploy to Netlify
 
-### Option 1: Drag and Drop
+### Option 1: Drag and Drop (Easiest!)
 1. Go to [app.netlify.com/drop](https://app.netlify.com/drop)
-2. Drag the entire `netlify-site` folder onto the page
+2. Drag the **entire `netlify-drop` folder** from your computer onto the browser window
 3. Your site will be live instantly!
 
 ### Option 2: Git Deploy
 1. Push this folder to a Git repository
 2. Connect your repo to Netlify
 3. Set build settings:
-   - **Publish directory**: `.` (current directory)
-   - **Build command**: (leave empty)
+   - **Publish directory**: `.` (current directory) or `netlify-drop` if that's your root
+   - **Build command**: (leave empty - no build needed)
 
 ## Structure
 
 ```
-netlify-site/
+netlify-drop/
 ├── index.html          # Main customer ordering website
 ├── css/
 │   └── styles.css      # Website styles

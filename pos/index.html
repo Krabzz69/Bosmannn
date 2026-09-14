@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHAZIOS POS - Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="pos-styles.css">
+    <style>
+        .demo-notice { background: #ff9800; color: white; padding: 10px; text-align: center; font-weight: 600; }
+        .pos-container { display: grid; grid-template-columns: 1fr 400px; gap: 20px; padding: 20px; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+        .product-card { background: white; border-radius: 12px; padding: 15px; cursor: pointer; transition: transform 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .product-card:hover { transform: translateY(-2px); }
+        .product-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
+        .product-card h3 { font-size: 14px; margin-bottom: 5px; }
+        .product-card .price { color: #667eea; font-weight: 700; }
+        .cart-panel { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .cart-items { max-height: 400px; overflow-y: auto; margin: 15px 0; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .cart-total { font-size: 24px; font-weight: 800; color: #667eea; margin: 20px 0; }
+        .checkout-btn { width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="demo-notice">🚧 DEMO MODE - Backend features disabled</div>
+    <header style="padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <h1>GHAZIOS POS</h1>
+        <p>Demo Restaurant</p>
+    </header>
+    <div class="pos-container">
+        <div>
+            <h2>Menu</h2>
+            <div class="products-grid">
+                <div class="product-card" onclick="addToCart('Burger', 250)"><img src="https://placehold.co/400x300/f0f0f0/999?text=Burger" alt="Burger"><h3>Burger</h3><div class="price">Rs 250</div></div>
+                <div class="product-card" onclick="addToCart('Pizza', 450)"><img src="https://placehold.co/400x300/f0f0f0/999?text=Pizza" alt="Pizza"><h3>Pizza</h3><div class="price">Rs 450</div></div>
+                <div class="product-card" onclick="addToCart('Fries', 120)"><img src="https://placehold.co/400x300/f0f0f0/999?text=Fries" alt="Fries"><h3>Fries</h3><div class="price">Rs 120</div></div>
+                <div class="product-card" onclick="addToCart('Coke', 80)"><img src="https://placehold.co/400x300/f0f0f0/999?text=Coke" alt="Coke"><h3>Coke</h3><div class="price">Rs 80</div></div>
+            </div>
+        </div>
+        <div class="cart-panel">
+            <h2>Current Order</h2>
+            <div class="cart-items" id="cartItems"><p style="color: #999;">No items yet</p></div>
+            <div class="cart-total" id="cartTotal">Total: Rs 0</div>
+            <button class="checkout-btn" onclick="checkout()">Complete Order</button>
+        </div>
+    </div>
+    <script>
+        let cart = [];
+        function addToCart(name, price) {
+            const existing = cart.find(i => i.name === name);
+            if (existing) existing.qty++; else cart.push({name, price, qty: 1});
+            renderCart();
+        }
+        function renderCart() {
+            const el = document.getElementById('cartItems');
+            if (!cart.length) { el.innerHTML = '<p style="color: #999;">No items yet</p>'; document.getElementById('cartTotal').textContent = 'Total: Rs 0'; return; }
+            el.innerHTML = cart.map(i => `<div class="cart-item"><span>${i.name} x${i.qty}</span><span>Rs ${i.price * i.qty}</span></div>`).join('');
+            document.getElementById('cartTotal').textContent = 'Total: Rs ' + cart.reduce((s, i) => s + i.price * i.qty, 0);
+        }
+        function checkout() {
+            if (!cart.length) return alert('Cart is empty');
+            alert('Order completed! (Demo mode)');
+            cart = [];
+            renderCart();
+        }
+    </script>
+</body>
+</html>
