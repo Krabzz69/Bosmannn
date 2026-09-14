@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHAZIOS Kitchen Display</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="kitchen-styles.css">
+</head>
+<body>
+    <!-- LOGIN -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <div class="login-logo">
+                <div class="logo-text">GHAZIOS</div>
+                <div class="login-subtitle">Kitchen Display</div>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Restaurant</label>
+                    <select id="tenantSelect" required>
+                        <option value="">Select Restaurant</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="login-btn">Sign In</button>
+                <div class="login-error" id="loginError"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- KITCHEN DISPLAY -->
+    <div class="kitchen-container" id="kitchenContainer" style="display:none">
+        <header class="kitchen-header">
+            <div class="header-left">
+                <div class="header-logo">GHAZIOS</div>
+                <div class="header-divider"></div>
+                <span class="header-restaurant" id="restaurantName">Kitchen</span>
+            </div>
+            <div class="header-stats">
+                <div class="stat">
+                    <span class="stat-val" id="pendingCount">0</span>
+                    <span class="stat-lbl">Pending</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-val" id="confirmedCount">0</span>
+                    <span class="stat-lbl">Preparing</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="header-time" id="currentTime"></div>
+                <button class="refresh-btn" id="refreshBtn">↻</button>
+                <button class="logout-btn" id="logoutBtn">Logout</button>
+            </div>
+        </header>
+
+        <main class="kitchen-main">
+            <div class="orders-grid" id="ordersGrid">
+                <div class="empty-state">No pending orders</div>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="kitchen-app.js"></script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHAZIOS - Order Food Online</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- LANDING PAGE: Choose Restaurant -->
+    <div class="landing-page" id="landingPage">
+        <!-- Binary Rain Background -->
+        <canvas id="binaryCanvas"></canvas>
+        
+        <header class="landing-header">
+            <div class="logo">
+                <span class="logo-text">GHAZIOS</span>
+                <div class="logo-line"></div>
+            </div>
+            <p class="tagline">Choose your restaurant</p>
+        </header>
+        
+        <main class="restaurants-grid" id="restaurantsGrid">
+            <div class="loading">Loading restaurants...</div>
+        </main>
+    </div>
+
+    <!-- CHOICE ANIMATION -->
+    <div class="choice-overlay" id="choiceOverlay">
+        <div class="choice-content">
+            <div class="choice-text" id="choiceText"></div>
+            <div class="choice-subtext">is a great choice!</div>
+        </div>
+    </div>
+
+    <!-- RESTAURANT MENU PAGE -->
+    <div class="menu-page" id="menuPage" style="display:none">
+        <header class="menu-header">
+            <button class="back-btn" id="backBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+            </button>
+            <div class="restaurant-info">
+                <h1 id="restaurantName">Restaurant</h1>
+            </div>
+            <button class="cart-btn" id="cartBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+                <span class="cart-count" id="cartCount">0</span>
+            </button>
+        </header>
+
+        <nav class="category-nav">
+            <div class="category-scroll" id="categoryScroll">
+                <button class="cat-btn active" data-cat="all">All</button>
+            </div>
+        </nav>
+
+        <main class="menu-grid" id="menuGrid">
+            <div class="loading">Loading menu...</div>
+        </main>
+    </div>
+
+    <!-- CART DRAWER -->
+    <div class="cart-overlay" id="cartOverlay"></div>
+    <div class="cart-drawer" id="cartDrawer">
+        <div class="cart-header">
+            <h2>Your Order</h2>
+            <button class="cart-close" id="cartClose">✕</button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <div class="cart-empty"><p>Your cart is empty</p></div>
+        </div>
+        <div class="cart-summary" id="cartSummary" style="display:none">
+            <div class="summary-row"><span>Subtotal</span><span id="subtotal">Rs 0.00</span></div>
+            <div class="summary-row"><span>Tax (15%)</span><span id="tax">Rs 0.00</span></div>
+            <div class="summary-row total"><span>Total</span><span id="total">Rs 0.00</span></div>
+        </div>
+        <div class="cart-checkout" id="cartCheckout" style="display:none">
+            <div class="checkout-field">
+                <label>Your Name *</label>
+                <input type="text" id="customerName" placeholder="Enter your name" required>
+            </div>
+            <div class="checkout-field">
+                <label>Phone Number *</label>
+                <div class="phone-input">
+                    <span class="phone-prefix">+230</span>
+                    <input type="tel" id="customerPhone" placeholder="5123 4567" maxlength="9" required>
+                </div>
+                <small>Receipt will be sent via WhatsApp</small>
+            </div>
+            <button class="checkout-btn" id="checkoutBtn" disabled>Place Order</button>
+        </div>
+    </div>
+
+    <!-- SUCCESS MODAL -->
+    <div class="success-modal" id="successModal">
+        <div class="success-content">
+            <div class="success-icon">✓</div>
+            <h2>Order Placed!</h2>
+            <p class="success-invoice" id="successInvoice"></p>
+            <button class="success-btn" id="successBtn">Back to Menu</button>
+        </div>
+    </div>
+
+    <div class="toasts" id="toasts"></div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
