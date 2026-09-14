@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHAZIOS Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin-styles.css">
+</head>
+<body>
+    <!-- LOGIN -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <div class="login-logo">
+                <div class="logo-text">GHAZIOS</div>
+                <p class="login-subtitle">Admin Panel</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Restaurant</label>
+                    <select id="tenantSelect" required>
+                        <option value="">Select Restaurant</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="login-btn">Sign In</button>
+                <div class="login-error" id="loginError"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADMIN INTERFACE -->
+    <div class="admin-container" id="adminContainer" style="display:none">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">GHAZIOS</div>
+                <div class="sidebar-restaurant" id="restaurantName">Admin</div>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-section="dashboard">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                    Dashboard
+                </button>
+                <button class="nav-item" data-section="inventory">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    Inventory
+                </button>
+                <button class="nav-item" data-section="orders">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Orders
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <span id="userName">Admin</span>
+                </div>
+                <button class="logout-btn" id="logoutBtn">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="content-header">
+                <div>
+                    <h1 id="sectionTitle">Dashboard</h1>
+                    <p id="sectionSubtitle">Overview of your restaurant</p>
+                </div>
+                <div class="header-right">
+                    <div class="header-time" id="currentTime"></div>
+                    <button class="refresh-btn" id="refreshBtn">↻ Refresh</button>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <!-- DASHBOARD -->
+                <section class="section active" id="dashboardSection">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon orders">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="todayOrders">0</span>
+                                <span class="stat-label">Today's Orders</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon revenue">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="todayRevenue">Rs 0</span>
+                                <span class="stat-label">Today's Revenue</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon pending">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="pendingOrders">0</span>
+                                <span class="stat-label">Pending Orders</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon low-stock">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="lowStockCount">0</span>
+                                <span class="stat-label">Low Stock</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card">
+                            <h3>Recent Orders</h3>
+                            <div id="recentOrders"></div>
+                        </div>
+                        <div class="dashboard-card">
+                            <h3>Low Stock Alert</h3>
+                            <div id="lowStockList"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- INVENTORY -->
+                <section class="section" id="inventorySection">
+                    <div class="section-actions">
+                        <div class="search-box">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <input type="text" id="inventorySearch" placeholder="Search inventory...">
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Stock</th>
+                                    <th>Unit</th>
+                                    <th>Reorder Level</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ORDERS -->
+                <section class="section" id="ordersSection">
+                    <div class="section-actions">
+                        <select id="orderStatusFilter">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="ready">Ready</option>
+                            <option value="collected">Collected</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <select id="orderSourceFilter">
+                            <option value="">All Sources</option>
+                            <option value="walkin">Walk-in</option>
+                            <option value="online">Online</option>
+                        </select>
+                        <select id="orderPayFilter">
+                            <option value="">All Payments</option>
+                            <option value="cash">Cash</option>
+                            <option value="card">Card</option>
+                            <option value="mobile">Mobile</option>
+                        </select>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Invoice</th>
+                                    <th>Customer</th>
+                                    <th>Source</th>
+                                    <th>Payment</th>
+                                    <th>Status</th>
+                                    <th>Total</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- RESTOCK MODAL -->
+    <div class="modal-overlay" id="restockModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Restock Item</h3>
+                <button class="modal-close" id="closeRestockModal">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="restock-name" id="restockItemName"></p>
+                <p class="restock-current" id="restockCurrent"></p>
+                <div class="quick-btns" id="quickQuantityBtns"></div>
+                <div class="form-group">
+                    <label>Custom Quantity</label>
+                    <input type="number" id="restockQuantity" min="1" value="1">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelRestock">Cancel</button>
+                <button class="btn-primary" id="confirmRestock">Restock</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="admin-app.js"></script>
+</body>
+</html>

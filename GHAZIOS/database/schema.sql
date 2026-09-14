@@ -167,6 +167,8 @@ CREATE TABLE products (
     -- Timestamps
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID REFERENCES users(id),
     
     -- Unique SKU per tenant
     UNIQUE(tenant_id, sku)
@@ -282,7 +284,9 @@ CREATE TABLE orders (
     collected_by UUID REFERENCES users(id),
     cancelled_at TIMESTAMPTZ,
     cancelled_by UUID REFERENCES users(id),
-    cancel_reason TEXT,
+    cancellation_reason TEXT,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID REFERENCES users(id),
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     
     -- Unique invoice per tenant
@@ -423,48 +427,45 @@ CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products FOR EACH ROW
 CREATE TRIGGER update_inventory_updated_at BEFORE UPDATE ON inventory FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Invoice number generator
+-- Invoice number generator - FIXED: Use proper sequences to prevent collisions (Issue #2)
+-- Walk-in orders: 3-digit sequence starting at 100 (SEP100, SEP101, ... SEP999)
+-- Online orders: 5-digit sequence starting at 10000 (SEP10000, SEP10001, ...)
+-- These ranges will never overlap
+
+CREATE SEQUENCE IF NOT EXISTS walkin_invoice_seq START WITH 100;
+CREATE SEQUENCE IF NOT EXISTS online_invoice_seq START WITH 10000;
+
 CREATE OR REPLACE FUNCTION generate_invoice_number()
 RETURNS TRIGGER AS $$
 DECLARE
     month_prefix VARCHAR(3);
     sequence_num INTEGER;
-    start_num INTEGER;
 BEGIN
     month_prefix := UPPER(TO_CHAR(CURRENT_DATE, 'Mon'));
     
     IF NEW.source = 'walkin' THEN
-        start_num := 100;
-    ELSE
-        start_num := 10000;
-    END IF;
-    
-    SELECT COALESCE(MAX(CAST(SUBSTRING(invoice_number FROM 4) AS INTEGER)), 0) + 1
-    INTO sequence_num
-    FROM orders
-    WHERE tenant_id = NEW.tenant_id
-    AND invoice_number LIKE month_prefix || '%';
-    
-    IF sequence_num < start_num THEN
-        sequence_num := start_num;
-    END IF;
-    
-    IF NEW.source = 'walkin' THEN
+        -- Get next walk-in sequence number
+        sequence_num := nextval('walkin_invoice_seq');
+        -- Reset if we exceed 999 (prevent overflow)
+        IF sequence_num > 999 THEN
+            EXECUTE 'ALTER SEQUENCE walkin_invoice_seq RESTART WITH 100';
+            sequence_num := 100;
+        END IF;
         NEW.invoice_number := month_prefix || LPAD(sequence_num::TEXT, 3, '0');
     ELSE
+        -- Get next online sequence number
+        sequence_num := nextval('online_invoice_seq');
+        -- Reset if we exceed 99999 (prevent overflow)
+        IF sequence_num > 99999 THEN
+            EXECUTE 'ALTER SEQUENCE online_invoice_seq RESTART WITH 10000';
+            sequence_num := 10000;
+        END IF;
         NEW.invoice_number := month_prefix || LPAD(sequence_num::TEXT, 5, '0');
     END IF;
     
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
-CREATE TRIGGER generate_invoice_number
-    BEFORE INSERT ON orders
-    FOR EACH ROW
-    WHEN (NEW.invoice_number IS NULL OR NEW.invoice_number = '')
-    EXECUTE FUNCTION generate_invoice_number();
-
 -- Receipt number generator
 CREATE OR REPLACE FUNCTION generate_receipt_number()
 RETURNS TRIGGER AS $$
@@ -496,6 +497,25 @@ CREATE TRIGGER generate_receipt_number
     EXECUTE FUNCTION generate_receipt_number();
 
 -- ============================================
+-- AUDIT LOGS TABLE - For tracking all actions
+-- ============================================
+CREATE TABLE audit_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    action VARCHAR(50) NOT NULL,
+    entity_type VARCHAR(50),
+    entity_id UUID,
+    details JSONB,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_audit_logs_tenant ON audit_logs(tenant_id);
+CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
+CREATE INDEX idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX idx_audit_logs_created ON audit_logs(created_at);
+
+-- ============================================
 -- SAMPLE DATA
 -- ============================================
 
@@ -504,8 +524,9 @@ INSERT INTO tenants (slug, name, primary_color, secondary_color, phone, email, a
 VALUES ('quickeez', 'Quickeez Fried Chicken', '#D32F2F', '#1565C0', '+23051234567', 'info@quickeez.mu', 'Curepipe, Mauritius');
 
 -- Create admin user (password: admin123)
+-- FIXED: Ensure tenant admins get role 'admin', not 'superadmin' (Security Issue #4)
 INSERT INTO users (tenant_id, username, password_hash, full_name, role)
-SELECT id, 'admin', '$2b$10$vskDtXc9fKXaGgzGSRZomeq5u.QjECCRfNWyH2pkkhW/9Be1xQ57y', 'Super Admin', 'superadmin'
+SELECT id, 'admin', '$2b$10$vskDtXc9fKXaGgzGSRZomeq5u.QjECCRfNWyH2pkkhW/9Be1xQ57y', 'Restaurant Admin', 'admin'
 FROM tenants WHERE slug = 'quickeez';
 
 -- Create sample products

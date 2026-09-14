@@ -66,10 +66,6 @@ $('loginForm').addEventListener('submit', async e => {
         tenantId = data.user.tenantId;
         tenantSlug = data.user.tenantSlug;
         
-        // FIXED: Session Fragility - Store token in localStorage for persistence (Issue #7)
-        localStorage.setItem('ghazios_pos_token', token);
-        localStorage.setItem('ghazios_pos_user', JSON.stringify(user));
-        
         $('loginScreen').style.display = 'none';
         $('posApp').style.display = 'block';
         $('userName').textContent = user.fullName;
@@ -92,9 +88,6 @@ $('logoutBtn').addEventListener('click', () => {
     token = null;
     user = null;
     tenantId = null;
-    // Clear stored session on logout
-    localStorage.removeItem('ghazios_pos_token');
-    localStorage.removeItem('ghazios_pos_user');
     $('posApp').style.display = 'none';
     $('loginScreen').style.display = 'flex';
 });
@@ -264,7 +257,7 @@ async function submitOrder() {
         });
         
         if (data.success) {
-            await showReceipt(data.order);
+            showReceipt(data.order);
             updatePendingBadge();
         }
     } catch (e) {
@@ -276,66 +269,39 @@ async function submitOrder() {
 }
 
 // ============================================
-// RECEIPT - FIXED: Generate from server order data (Issue #6)
+// RECEIPT
 // ============================================
-async function showReceipt(order) {
+function showReceipt(order) {
     $('receiptInv').textContent = `Invoice: ${order.invoice_number}`;
     
-    // FIXED: Fetch complete order data from server including items
-    // Don't use client-side cart which can be manipulated
-    let orderData = order;
-    if (!orderData.items) {
-        try {
-            const fullOrder = await api(`/orders/${order.id}`);
-            orderData = fullOrder.order;
-            orderData.items = fullOrder.items;
-        } catch (e) {
-            console.error('Failed to fetch order details:', e);
-        }
-    }
+    const sub = cart.reduce((s, x) => {
+        const p = x.isMeal ? parseFloat(x.product.base_price) + parseFloat(x.product.meal_upcharge_price || 0) : parseFloat(x.product.base_price);
+        return s + p * x.qty;
+    }, 0);
     
-    const now = new Date(orderData.created_at);
-    
-    // FIXED: Use restaurant name instead of GHAZIOS branding (Issue #29)
-    const restaurantName = user.tenantName || 'GHAZIOS';
-    let r = `<h4>${esc(restaurantName)}</h4>`;
+    const now = new Date();
+    let r = `<h4>GHAZIOS</h4>`;
     r += `<div class="sep">================================</div>`;
-    r += `<div>Invoice: ${esc(orderData.invoice_number)}</div>`;
+    r += `<div>Invoice: ${order.invoice_number}</div>`;
     r += `<div>Date: ${now.toLocaleDateString('en-GB')}</div>`;
     r += `<div>Time: ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</div>`;
     r += `<div>Cashier: ${esc(user.fullName)}</div>`;
-    if (orderData.customer_name) r += `<div>Customer: ${esc(orderData.customer_name)}</div>`;
+    if (order.customer_name) r += `<div>Customer: ${esc(order.customer_name)}</div>`;
     r += `<div class="sep">--------------------------------</div>`;
     
-    // FIXED: Render items from server data, not client cart
-    let subtotal = 0;
-    if (orderData.items && orderData.items.length > 0) {
-        orderData.items.forEach(item => {
-            const lineTotal = parseFloat(item.line_total);
-            subtotal += lineTotal;
-            const mealTag = item.is_meal ? '[MEAL]' : '[IND]';
-            r += `<div>${esc(item.product_name)}</div>`;
-            r += `<div>${mealTag} x${item.quantity} ........ Rs ${lineTotal.toFixed(2)}</div>`;
-            if (item.special_notes) {
-                r += `<div style="font-size:0.8em;color:#666">Note: ${esc(item.special_notes)}</div>`;
-            }
-        });
-    }
-    
-    const tax = parseFloat(orderData.tax_amount) || (subtotal * 0.15);
-    const total = parseFloat(orderData.total_amount) || (subtotal + tax);
+    cart.forEach(x => {
+        const p = x.isMeal ? parseFloat(x.product.base_price) + parseFloat(x.product.meal_upcharge_price || 0) : parseFloat(x.product.base_price);
+        r += `<div>${esc(x.product.name)}</div>`;
+        r += `<div>${x.isMeal ? '[MEAL]' : '[IND]'} x${x.qty} ........ Rs ${(p * x.qty).toFixed(2)}</div>`;
+    });
     
     r += `<div class="sep">--------------------------------</div>`;
-    r += `<div>Subtotal: Rs ${subtotal.toFixed(2)}</div>`;
-    r += `<div>Tax (15%): Rs ${tax.toFixed(2)}</div>`;
-    r += `<div style="font-weight:bold;font-size:1.1em">TOTAL: Rs ${total.toFixed(2)}</div>`;
-    r += `<div>Payment: ${esc((orderData.payment_method || 'cash').toUpperCase())}</div>`;
-    if (orderData.payment_status) {
-        r += `<div>Status: ${esc(orderData.payment_status.toUpperCase())}</div>`;
-    }
+    r += `<div>Subtotal: Rs ${sub.toFixed(2)}</div>`;
+    r += `<div>Tax: Rs ${(sub * 0.15).toFixed(2)}</div>`;
+    r += `<div style="font-weight:bold">TOTAL: Rs ${(sub * 1.15).toFixed(2)}</div>`;
+    r += `<div>Payment: ${currentPayment.toUpperCase()}</div>`;
     r += `<div class="sep">================================</div>`;
-    r += `<div style="text-align:center">Thank you for your business!</div>`;
-    r += `<div style="text-align:center;font-size:0.8em;color:#666;margin-top:8px">${esc(restaurantName)}</div>`;
+    r += `<div style="text-align:center">Thank you!</div>`;
     
     $('receiptPaper').innerHTML = r;
     $('receiptOverlay').classList.add('active');
@@ -423,10 +389,9 @@ async function updatePendingBadge() {
     } catch (e) {}
 }
 
-async function loadOrders(source = 'all') {
+async function loadOrders(status = 'all') {
     try {
-        // FIXED: POS Filter Failure - Pass valid source param instead of invalid status (Issue #5)
-        const url = source === 'all' ? '/orders' : `/orders?source=${source}`;
+        const url = status === 'all' ? '/orders' : `/orders?status=${status}`;
         const orders = await api(url);
         renderOrders(orders);
     } catch (e) {
@@ -470,26 +435,15 @@ function toast(msg, type = 'ok') {
 }
 
 // ============================================
-// INIT - FIXED: Properly initialize impersonated sessions (Issue #4)
+// INIT
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Check for token in URL (impersonation) or localStorage (persistent session)
     const urlToken = new URLSearchParams(window.location.search).get('token');
-    let initialized = false;
-    
     if (urlToken) {
         token = urlToken;
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
-            user = { 
-                id: payload.id, 
-                username: payload.username, 
-                role: payload.role, 
-                fullName: payload.fullName,
-                tenantId: payload.tenantId,
-                tenantSlug: payload.tenantSlug,
-                tenantName: payload.tenantName
-            };
+            user = { id: payload.id, username: payload.username, role: payload.role, fullName: payload.fullName };
             tenantId = payload.tenantId;
             tenantSlug = payload.tenantSlug;
             $('loginScreen').style.display = 'none';
@@ -498,58 +452,11 @@ document.addEventListener('DOMContentLoaded', () => {
             $('userAvatar').textContent = payload.fullName.charAt(0).toUpperCase();
             $('restaurantName').textContent = payload.tenantName;
             window.history.replaceState({}, document.title, window.location.pathname);
-            // FIXED: Initialize all components for impersonated sessions
-            loadProducts(); 
-            loadReadyOrders(); 
-            updatePendingBadge(); 
-            initSocket(); 
-            startClock();
-            initialized = true;
-        } catch (e) { 
-            console.error('Invalid token:', e);
-            token = null; 
-            loadTenants(); 
-        }
+            loadProducts(); loadReadyOrders(); updatePendingBadge(); initSocket(); startClock();
+        } catch (e) { token = null; loadTenants(); }
         return;
     }
-    
-    // Check for persistent session in localStorage
-    const storedToken = localStorage.getItem('ghazios_pos_token');
-    const storedUser = localStorage.getItem('ghazios_pos_user');
-    if (storedToken && storedUser) {
-        try {
-            token = storedToken;
-            user = JSON.parse(storedUser);
-            tenantId = user.tenantId;
-            tenantSlug = user.tenantSlug;
-            // Verify token is still valid by checking expiry
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            const now = Math.floor(Date.now() / 1000);
-            if (payload.exp && payload.exp < now) {
-                throw new Error('Token expired');
-            }
-            $('loginScreen').style.display = 'none';
-            $('posApp').style.display = 'block';
-            $('userName').textContent = user.fullName;
-            $('userAvatar').textContent = user.fullName.charAt(0).toUpperCase();
-            $('restaurantName').textContent = user.tenantName;
-            loadProducts(); 
-            loadReadyOrders(); 
-            updatePendingBadge(); 
-            initSocket(); 
-            startClock();
-            initialized = true;
-        } catch (e) {
-            console.log('Session expired, requiring login');
-            localStorage.removeItem('ghazios_pos_token');
-            localStorage.removeItem('ghazios_pos_user');
-            loadTenants();
-        }
-    }
-    
-    if (!initialized && !urlToken) {
-        loadTenants();
-    }
+    loadTenants();
     
     document.querySelectorAll('.pay-opt').forEach(btn => {
         btn.addEventListener('click', () => {

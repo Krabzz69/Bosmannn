@@ -1,0 +1,30 @@
+============================================================
+  GHAZIOS MULTI-TENANT POS SYSTEM - DEPLOYMENT SUCCESSFUL
+============================================================
+
+🚀 Your application is running!
+
+🌐 ACCESS YOUR WEBSITE:
+   http://<YOUR_VPS_IP>:3000
+
+🔑 DEFAULT LOGIN CREDENTIALS:
+   Superadmin:
+   - Username: superadmin
+   - Password: ChangeMeImmediately123!
+
+   Tenant Admin (Demo Restaurant):
+   - Username: admin
+   - Password: admin123
+   - Tenant Slug: demo-restaurant
+
+🛠️ QUICK COMMANDS:
+   • View Logs:      docker compose logs -f
+   • Restart App:    docker compose restart
+   • Stop App:       docker compose down
+   • Update DB:      docker compose exec db psql -U ghazios -d ghazios_db -f /docker-entrypoint-initdb.d/schema.sql
+
+⚠️  SECURITY ALERT:
+   Please change your default passwords in the database immediately.
+   Configure HTTPS (SSL) before going live with real customer data.
+
+============================================================

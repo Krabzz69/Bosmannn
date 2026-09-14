@@ -1,0 +1,32 @@
+[build]
+  publish = "."
+  
+[[redirects]]
+  from = "/api/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/socket.io/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/pos/*"
+  to = "/pos/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/kitchen/*"
+  to = "/kitchen/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/superadmin/*"
+  to = "/superadmin/index.html"
+  status = 200

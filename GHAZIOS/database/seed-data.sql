@@ -14,13 +14,17 @@ DECLARE
 BEGIN
     SELECT id INTO tenant_id FROM tenants WHERE slug = 'quickeez';
     
-    -- Create admin user (password: admin123)
+    -- FIXED: Create admin user with role 'admin' NOT 'superadmin' (Security Issue #1)
     INSERT INTO users (tenant_id, username, password_hash, full_name, role)
-    VALUES (tenant_id, 'admin', '$2b$10$vskDtXc9fKXaGgzGSRZomeq5u.QjECCRfNWyH2pkkhW/9Be1xQ57y', 'Super Admin', 'superadmin');
+    VALUES (tenant_id, 'admin', '$2b$10$vskDtXc9fKXaGgzGSRZomeq5u.QjECCRfNWyH2pkkhW/9Be1xQ57y', 'Restaurant Admin', 'admin');
     
     -- Create cashier user (password: cashier123)
     INSERT INTO users (tenant_id, username, password_hash, full_name, role)
     VALUES (tenant_id, 'cashier', '$2b$10$vskDtXc9fKXaGgzGSRZomeq5u.QjECCRfNWyH2pkkhW/9Be1xQ57y', 'Cashier One', 'cashier');
+    
+    -- Create kitchen staff
+    INSERT INTO users (tenant_id, username, password_hash, full_name, role)
+    VALUES (tenant_id, 'kitchen', '$2b$10$vskDtXc9fKXaGgzGSRZomeq5u.QjECCRfNWyH2pkkhW/9Be1xQ57y', 'Kitchen Staff', 'kitchen');
     
     -- Create products
     INSERT INTO products (tenant_id, sku, name, description, category, base_price, meal_upcharge_price, is_customizable, sort_order) VALUES
