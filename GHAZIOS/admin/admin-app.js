@@ -252,9 +252,11 @@ function showToast(msg, type = 'success') {
     setTimeout(() => t.remove(), 3000);
 }
 
-// Init
+// Init - FIXED: Properly initialize impersonated sessions (Issue #4)
 document.addEventListener('DOMContentLoaded', () => {
     const urlToken = new URLSearchParams(window.location.search).get('token');
+    let initialized = false;
+    
     if (urlToken) {
         token = urlToken;
         try {
@@ -265,9 +267,21 @@ document.addEventListener('DOMContentLoaded', () => {
             $('userName').textContent = payload.fullName + (payload.impersonatedBy ? ` (via ${payload.impersonatedBy})` : '');
             $('restaurantName').textContent = payload.tenantName;
             window.history.replaceState({}, document.title, window.location.pathname);
-            loadData(); initSocket(); updateClock(); setInterval(updateClock, 1000);
-        } catch (e) { token = null; loadTenants(); }
+            // FIXED: Initialize all components for impersonated sessions
+            loadData(); 
+            initSocket(); 
+            updateClock(); 
+            setInterval(updateClock, 1000);
+            initialized = true;
+        } catch (e) { 
+            console.error('Invalid token:', e);
+            token = null; 
+            loadTenants(); 
+        }
         return;
     }
-    loadTenants();
+    
+    if (!initialized) {
+        loadTenants();
+    }
 });

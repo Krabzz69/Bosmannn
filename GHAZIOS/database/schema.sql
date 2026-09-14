@@ -167,6 +167,8 @@ CREATE TABLE products (
     -- Timestamps
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID REFERENCES users(id),
     
     -- Unique SKU per tenant
     UNIQUE(tenant_id, sku)
@@ -282,7 +284,9 @@ CREATE TABLE orders (
     collected_by UUID REFERENCES users(id),
     cancelled_at TIMESTAMPTZ,
     cancelled_by UUID REFERENCES users(id),
-    cancel_reason TEXT,
+    cancellation_reason TEXT,
+    archived_at TIMESTAMPTZ,
+    archived_by UUID REFERENCES users(id),
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     
     -- Unique invoice per tenant
@@ -493,6 +497,25 @@ CREATE TRIGGER generate_receipt_number
     EXECUTE FUNCTION generate_receipt_number();
 
 -- ============================================
+-- AUDIT LOGS TABLE - For tracking all actions
+-- ============================================
+CREATE TABLE audit_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    action VARCHAR(50) NOT NULL,
+    entity_type VARCHAR(50),
+    entity_id UUID,
+    details JSONB,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_audit_logs_tenant ON audit_logs(tenant_id);
+CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
+CREATE INDEX idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX idx_audit_logs_created ON audit_logs(created_at);
+
+-- ============================================
 -- SAMPLE DATA
 -- ============================================
 
@@ -501,8 +524,9 @@ INSERT INTO tenants (slug, name, primary_color, secondary_color, phone, email, a
 VALUES ('quickeez', 'Quickeez Fried Chicken', '#D32F2F', '#1565C0', '+23051234567', 'info@quickeez.mu', 'Curepipe, Mauritius');
 
 -- Create admin user (password: admin123)
+-- FIXED: Ensure tenant admins get role 'admin', not 'superadmin' (Security Issue #4)
 INSERT INTO users (tenant_id, username, password_hash, full_name, role)
-SELECT id, 'admin', '$2b$10$vskDtXc9fKXaGgzGSRZomeq5u.QjECCRfNWyH2pkkhW/9Be1xQ57y', 'Super Admin', 'superadmin'
+SELECT id, 'admin', '$2b$10$vskDtXc9fKXaGgzGSRZomeq5u.QjECCRfNWyH2pkkhW/9Be1xQ57y', 'Restaurant Admin', 'admin'
 FROM tenants WHERE slug = 'quickeez';
 
 -- Create sample products

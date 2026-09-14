@@ -208,6 +208,8 @@ function toast(msg, type = 'success') {
 
 document.addEventListener('DOMContentLoaded', () => {
     const urlToken = new URLSearchParams(window.location.search).get('token');
+    let initialized = false;
+    
     if (urlToken) {
         token = urlToken;
         try {
@@ -217,10 +219,23 @@ document.addEventListener('DOMContentLoaded', () => {
             $('kitchenContainer').style.display = 'block';
             $('restaurantName').textContent = payload.tenantName || '';
             window.history.replaceState({}, document.title, window.location.pathname);
-            loadOrders(); initSocket(); updateClock(); setInterval(updateClock, 1000); setInterval(loadOrders, 15000);
-        } catch (e) { token = null; loadTenants(); }
+            // FIXED: Initialize all components for impersonated sessions
+            loadOrders(); 
+            initSocket(); 
+            updateClock(); 
+            setInterval(updateClock, 1000); 
+            setInterval(loadOrders, 15000);
+            initialized = true;
+        } catch (e) { 
+            console.error('Invalid token:', e);
+            token = null; 
+            loadTenants(); 
+        }
         return;
     }
-    loadTenants();
-    $('refreshBtn').addEventListener('click', () => { loadOrders(); toast('Refreshed', 'info'); });
+    
+    if (!initialized) {
+        loadTenants();
+        $('refreshBtn').addEventListener('click', () => { loadOrders(); toast('Refreshed', 'info'); });
+    }
 });
