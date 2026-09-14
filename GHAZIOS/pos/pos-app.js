@@ -66,6 +66,10 @@ $('loginForm').addEventListener('submit', async e => {
         tenantId = data.user.tenantId;
         tenantSlug = data.user.tenantSlug;
         
+        // FIXED: Session Fragility - Store token in localStorage for persistence (Issue #7)
+        localStorage.setItem('ghazios_pos_token', token);
+        localStorage.setItem('ghazios_pos_user', JSON.stringify(user));
+        
         $('loginScreen').style.display = 'none';
         $('posApp').style.display = 'block';
         $('userName').textContent = user.fullName;
@@ -88,6 +92,9 @@ $('logoutBtn').addEventListener('click', () => {
     token = null;
     user = null;
     tenantId = null;
+    // Clear stored session on logout
+    localStorage.removeItem('ghazios_pos_token');
+    localStorage.removeItem('ghazios_pos_user');
     $('posApp').style.display = 'none';
     $('loginScreen').style.display = 'flex';
 });
@@ -389,9 +396,10 @@ async function updatePendingBadge() {
     } catch (e) {}
 }
 
-async function loadOrders(status = 'all') {
+async function loadOrders(source = 'all') {
     try {
-        const url = status === 'all' ? '/orders' : `/orders?status=${status}`;
+        // FIXED: POS Filter Failure - Pass valid source param instead of invalid status (Issue #5)
+        const url = source === 'all' ? '/orders' : `/orders?source=${source}`;
         const orders = await api(url);
         renderOrders(orders);
     } catch (e) {

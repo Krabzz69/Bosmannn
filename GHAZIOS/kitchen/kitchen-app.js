@@ -92,11 +92,29 @@ async function loadOrders() {
     try {
         const all = await api('/orders');
         orders = all.filter(o => ['pending', 'confirmed'].includes(o.status));
+        
+        // FIXED: Queue Starvation - Sort by time first, then by source priority (Issue #8)
+        // Online orders should not starve; prioritize by wait time with slight walk-in preference
         orders.sort((a, b) => {
-            if (a.source === 'walkin' && b.source !== 'walkin') return -1;
-            if (a.source !== 'walkin' && b.source === 'walkin') return 1;
-            return new Date(a.created_at) - new Date(b.created_at);
+            const timeA = new Date(a.created_at).getTime();
+            const timeB = new Date(b.created_at).getTime();
+            const now = Date.now();
+            const waitA = now - timeA;
+            const waitB = now - timeB;
+            
+            // If one order has been waiting significantly longer (>10 min), prioritize it regardless of source
+            if (waitA - waitB > 600000) return -1;
+            if (waitB - waitA > 600000) return 1;
+            
+            // For similar wait times, give slight priority to walk-ins (first 3 only)
+            const aIsWalkin = a.source === 'walkin' ? 1 : 0;
+            const bIsWalkin = b.source === 'walkin' ? 1 : 0;
+            if (aIsWalkin !== bIsWalkin) return bIsWalkin - aIsWalkin;
+            
+            // Otherwise sort by creation time
+            return timeA - timeB;
         });
+        
         renderOrders();
         updateStats();
     } catch (e) {}
@@ -124,6 +142,18 @@ function renderOrders() {
         const isPriority = priorityIds.has(order.id);
         const isOnline = order.source === 'online' || order.source === 'reservation';
         
+        // FIXED: Render order items so kitchen can see what to prepare (Issue #4)
+        const itemsHtml = (order.items && order.items.length > 0) 
+            ? order.items.map(item => `
+                <div class="order-item">
+                    <span class="item-qty">${item.quantity}x</span>
+                    <span class="item-name">${esc(item.product_name)}</span>
+                    ${item.is_meal ? '<span class="meal-badge">MEAL</span>' : ''}
+                    ${item.special_notes ? `<div class="item-notes">📝 ${esc(item.special_notes)}</div>` : ''}
+                </div>
+            `).join('')
+            : '<div class="no-items">No items listed</div>';
+        
         return `
             <div class="order-card ${isPriority ? 'priority' : ''} ${isOnline ? 'online' : ''}">
                 <div class="order-card-header">
@@ -133,6 +163,9 @@ function renderOrders() {
                 <div class="order-card-body">
                     <div class="order-time">🕐 ${clockStr} (${timeStr})</div>
                     ${order.notes ? `<div class="order-notes">📝 ${esc(order.notes)}</div>` : ''}
+                    <div class="order-items-list">
+                        ${itemsHtml}
+                    </div>
                 </div>
                 <div class="order-card-footer">
                     <span class="status-badge ${esc(order.status)}">${order.status === 'pending' ? 'PENDING' : 'PREPARING'}</span>

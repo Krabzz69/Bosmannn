@@ -198,16 +198,19 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
         const cleanUsername = sanitize(String(username), 50);
         const cleanSlug = tenantSlug ? sanitize(String(tenantSlug), 50) : null;
 
+        // FIXED: Security Issue #5 - Require tenant slug for non-superadmin logins
+        // Prevents identity ambiguity when multiple tenants have same username
         let query, params;
         if (cleanSlug) {
-            query = `SELECT u.*, t.slug as tenant_slug, t.name as tenant_name
+            query = `SELECT u.*, t.slug as tenant_slug, t.name as tenant_name, t.is_active as tenant_active
                      FROM users u JOIN tenants t ON u.tenant_id = t.id
                      WHERE u.username = $1 AND u.is_active = TRUE AND t.slug = $2`;
             params = [cleanUsername, cleanSlug];
         } else {
-            query = `SELECT u.*, t.slug as tenant_slug, t.name as tenant_name
+            // Only allow superadmin to login without tenant slug
+            query = `SELECT u.*, t.slug as tenant_slug, t.name as tenant_name, t.is_active as tenant_active
                      FROM users u LEFT JOIN tenants t ON u.tenant_id = t.id
-                     WHERE u.username = $1 AND u.is_active = TRUE`;
+                     WHERE u.username = $1 AND u.is_active = TRUE AND u.role = 'superadmin'`;
             params = [cleanUsername];
         }
 
@@ -215,8 +218,17 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
         if (!result.rows.length) return res.status(401).json({ error: 'Invalid credentials' });
 
         const user = result.rows[0];
+        
+        // FIXED: Security Issue #7 - Block login for inactive tenants
+        if (user.tenant_id && !user.tenant_active) {
+            return res.status(403).json({ error: 'Tenant account is deactivated' });
+        }
+        
         const valid = await bcrypt.compare(password, user.password_hash);
         if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+
+        // FIXED: Update last_login timestamp (Issue #28)
+        await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
 
         const token = jwt.sign({
             id: user.id, username: user.username, role: user.role,
@@ -303,10 +315,15 @@ app.post('/api/orders', optionalAuth, async (req, res) => {
         for (const item of items) {
             if (!item.productId || !isValidUUID(item.productId)) throw new Error('Invalid product ID');
             const qty = Math.max(1, Math.min(99, parseInt(item.quantity) || 1));
-            const p = await client.query('SELECT base_price, meal_upcharge_price FROM products WHERE id = $1 AND tenant_id = $2', [item.productId, tenantId]);
+            const p = await client.query('SELECT base_price, meal_upcharge_price, category FROM products WHERE id = $1 AND tenant_id = $2', [item.productId, tenantId]);
             if (!p.rows.length) throw new Error('Product not found');
             const base = parseFloat(p.rows[0].base_price);
-            const meal = item.isMeal ? parseFloat(p.rows[0].meal_upcharge_price) : 0;
+            // FIXED: Only apply meal upcharge for non-drink items (Issue #12)
+            // Drinks should never be marked as meals
+            const productCategory = p.rows[0].category || '';
+            const isDrink = productCategory.toLowerCase() === 'drinks';
+            const isMeal = item.isMeal && !isDrink;
+            const meal = isMeal ? parseFloat(p.rows[0].meal_upcharge_price) : 0;
             subtotal += (base + meal) * qty;
         }
         const tax = Math.round(subtotal * 0.15 * 100) / 100;
@@ -323,14 +340,19 @@ app.post('/api/orders', optionalAuth, async (req, res) => {
 
         for (const item of items) {
             const qty = Math.max(1, Math.min(99, parseInt(item.quantity) || 1));
-            const p = await client.query('SELECT base_price, meal_upcharge_price FROM products WHERE id = $1', [item.productId]);
+            const p = await client.query('SELECT base_price, meal_upcharge_price, category FROM products WHERE id = $1', [item.productId]);
             const base = parseFloat(p.rows[0].base_price);
-            const meal = item.isMeal ? parseFloat(p.rows[0].meal_upcharge_price) : 0;
+            // FIXED: Only apply meal upcharge for non-drink items (Issue #12)
+            const productCategory = p.rows[0].category || '';
+            const isDrink = productCategory.toLowerCase() === 'drinks';
+            const isMeal = item.isMeal && !isDrink;
+            const meal = isMeal ? parseFloat(p.rows[0].meal_upcharge_price) : 0;
+            // FIXED: Don't copy order-level notes to every line item (Issue #12)
             const specialNotes = item.specialNotes ? sanitize(String(item.specialNotes), 200) : null;
             await client.query(
                 `INSERT INTO order_items (order_id, product_id, is_meal, quantity, unit_price, meal_addon_price, line_total, special_notes)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-                [order.id, item.productId, item.isMeal || false, qty, base, meal, (base + meal) * qty, specialNotes]
+                [order.id, item.productId, isMeal, qty, base, meal, (base + meal) * qty, specialNotes]
             );
         }
 
@@ -351,7 +373,8 @@ app.post('/api/orders', optionalAuth, async (req, res) => {
     } finally { client.release(); }
 });
 
-// Get orders for tenant
+// Get orders for tenant - FIXED: Include order items in list response (Issue #4 - Kitchen Display Blindness)
+// Kitchen staff need to see what items to prepare without clicking each order
 app.get('/api/orders', requireAuth, async (req, res) => {
     try {
         const { status, source, limit = 50 } = req.query;
@@ -371,7 +394,20 @@ app.get('/api/orders', requireAuth, async (req, res) => {
         p.push(safeLimit);
 
         const result = await pool.query(q, p);
-        res.json(result.rows);
+        
+        // FIXED: Fetch order items for each order so kitchen can see what to prepare
+        const ordersWithItems = await Promise.all(result.rows.map(async (order) => {
+            const itemsResult = await pool.query(
+                `SELECT oi.*, p.name as product_name, p.category as product_category 
+                 FROM order_items oi 
+                 JOIN products p ON oi.product_id = p.id 
+                 WHERE oi.order_id = $1`, 
+                [order.id]
+            );
+            return { ...order, items: itemsResult.rows };
+        }));
+        
+        res.json(ordersWithItems);
     } catch (err) {
         res.status(500).json({ error: 'Server error' });
     }
@@ -398,19 +434,25 @@ app.get('/api/orders/:id', requireAuth, validateUUIDParam('id'), async (req, res
     }
 });
 
-// Confirm order
+// Confirm order - FIXED: Don't mark as paid until payment is actually received (Issue #3)
+// Payment status should only be set to 'paid' when cashier confirms payment, not when kitchen starts preparing
 app.put('/api/orders/:id/confirm', requireAuth, validateUUIDParam('id'), async (req, res) => {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
-        const check = await client.query('SELECT status, tenant_id FROM orders WHERE id = $1 FOR UPDATE', [req.params.id]);
+        const check = await client.query('SELECT status, tenant_id, payment_method FROM orders WHERE id = $1 FOR UPDATE', [req.params.id]);
         if (!check.rows.length) return res.status(404).json({ error: 'Not found' });
         if (check.rows[0].tenant_id !== req.tenantId) return res.status(403).json({ error: 'Access denied' });
         if (check.rows[0].status !== 'pending') return res.status(400).json({ error: 'Cannot confirm' });
 
+        // FIXED: Only set payment_status to 'paid' for online/prepaid orders
+        // For cash/walk-in orders, keep as 'unpaid' until cashier collects payment
+        const order = check.rows[0];
+        const newPaymentStatus = (order.payment_method === 'online' || order.payment_method === 'prepaid') ? 'paid' : 'unpaid';
+
         const result = await client.query(
-            `UPDATE orders SET status = 'confirmed', confirmed_at = NOW(), confirmed_by = $1, payment_status = 'paid' WHERE id = $2 RETURNING *`,
-            [req.user.id, req.params.id]
+            `UPDATE orders SET status = 'confirmed', confirmed_at = NOW(), confirmed_by = $1, payment_status = $2 WHERE id = $3 RETURNING *`,
+            [req.user.id, newPaymentStatus, req.params.id]
         );
 
         await client.query('INSERT INTO receipts (tenant_id, order_id, receipt_type) VALUES ($1, $2, $3)', [req.tenantId, req.params.id, 'walkin']);
@@ -522,8 +564,11 @@ app.get('/api/dashboard/stats', requireAuth, async (req, res) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
+        // FIXED: Revenue Inflation - Only count paid/completed orders in revenue (Issue #10)
+        // Exclude pending and cancelled orders from revenue calculation
         const orders = await pool.query(
-            `SELECT COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_revenue,
+            `SELECT COUNT(*) as total_orders, 
+                    COALESCE(SUM(CASE WHEN status IN ('collected', 'ready') THEN total_amount ELSE 0 END), 0) as total_revenue,
                     COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_orders,
                     COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed_orders
              FROM orders WHERE tenant_id = $1 AND created_at >= $2`, [req.tenantId, today]

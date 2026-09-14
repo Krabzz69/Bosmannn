@@ -423,48 +423,45 @@ CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products FOR EACH ROW
 CREATE TRIGGER update_inventory_updated_at BEFORE UPDATE ON inventory FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Invoice number generator
+-- Invoice number generator - FIXED: Use proper sequences to prevent collisions (Issue #2)
+-- Walk-in orders: 3-digit sequence starting at 100 (SEP100, SEP101, ... SEP999)
+-- Online orders: 5-digit sequence starting at 10000 (SEP10000, SEP10001, ...)
+-- These ranges will never overlap
+
+CREATE SEQUENCE IF NOT EXISTS walkin_invoice_seq START WITH 100;
+CREATE SEQUENCE IF NOT EXISTS online_invoice_seq START WITH 10000;
+
 CREATE OR REPLACE FUNCTION generate_invoice_number()
 RETURNS TRIGGER AS $$
 DECLARE
     month_prefix VARCHAR(3);
     sequence_num INTEGER;
-    start_num INTEGER;
 BEGIN
     month_prefix := UPPER(TO_CHAR(CURRENT_DATE, 'Mon'));
     
     IF NEW.source = 'walkin' THEN
-        start_num := 100;
-    ELSE
-        start_num := 10000;
-    END IF;
-    
-    SELECT COALESCE(MAX(CAST(SUBSTRING(invoice_number FROM 4) AS INTEGER)), 0) + 1
-    INTO sequence_num
-    FROM orders
-    WHERE tenant_id = NEW.tenant_id
-    AND invoice_number LIKE month_prefix || '%';
-    
-    IF sequence_num < start_num THEN
-        sequence_num := start_num;
-    END IF;
-    
-    IF NEW.source = 'walkin' THEN
+        -- Get next walk-in sequence number
+        sequence_num := nextval('walkin_invoice_seq');
+        -- Reset if we exceed 999 (prevent overflow)
+        IF sequence_num > 999 THEN
+            EXECUTE 'ALTER SEQUENCE walkin_invoice_seq RESTART WITH 100';
+            sequence_num := 100;
+        END IF;
         NEW.invoice_number := month_prefix || LPAD(sequence_num::TEXT, 3, '0');
     ELSE
+        -- Get next online sequence number
+        sequence_num := nextval('online_invoice_seq');
+        -- Reset if we exceed 99999 (prevent overflow)
+        IF sequence_num > 99999 THEN
+            EXECUTE 'ALTER SEQUENCE online_invoice_seq RESTART WITH 10000';
+            sequence_num := 10000;
+        END IF;
         NEW.invoice_number := month_prefix || LPAD(sequence_num::TEXT, 5, '0');
     END IF;
     
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
-CREATE TRIGGER generate_invoice_number
-    BEFORE INSERT ON orders
-    FOR EACH ROW
-    WHEN (NEW.invoice_number IS NULL OR NEW.invoice_number = '')
-    EXECUTE FUNCTION generate_invoice_number();
-
 -- Receipt number generator
 CREATE OR REPLACE FUNCTION generate_receipt_number()
 RETURNS TRIGGER AS $$
